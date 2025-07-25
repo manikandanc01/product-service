@@ -1,10 +1,12 @@
 package dev.mani.productservice.controllers;
 
+import dev.mani.productservice.dtos.CreateProductRequestDto;
+import dev.mani.productservice.dtos.UpdateProductRequestDto;
 import dev.mani.productservice.models.Product;
 import dev.mani.productservice.services.ProductService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class ProductController {
@@ -16,17 +18,33 @@ public class ProductController {
     }
 
     @GetMapping("/products")
-    public void getAllProducts(){
-
-    }
-
-    public void createProduct(){
-
+    public List<Product> getAllProducts(){
+       return productService.getAllProducts();
     }
 
     @GetMapping("/products/{id}")
     public Product getProductById(@PathVariable("id") Long id){
-      Product product =  productService.getProductById(id);
-      return product;
+        return  productService.getProductById(id);
     }
+
+    @PostMapping("/products")
+    public Product createProduct(@RequestBody  CreateProductRequestDto createProductRequestDto){
+         return productService.createProduct(createProductRequestDto.getTitle(),
+                  createProductRequestDto.getDescription(),
+                  createProductRequestDto.getPrice(),
+                  createProductRequestDto.getImage(), createProductRequestDto.getCategory());
+    }
+
+    @PutMapping("/products/{id}")
+    public Product updateProduct(@PathVariable("id") Long id, @RequestBody UpdateProductRequestDto updateProductRequestDto){
+        return productService.updateProductById(
+                id,
+                updateProductRequestDto.getTitle(),
+                updateProductRequestDto.getDescription(),
+                updateProductRequestDto.getPrice(),
+                updateProductRequestDto.getImage(),
+                updateProductRequestDto.getCategory());
+    }
+
+
 }
