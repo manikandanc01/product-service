@@ -4,9 +4,8 @@ import dev.mani.productservice.dtos.FakeStoreCreateProductDto;
 import dev.mani.productservice.dtos.FakeStoreProductDto;
 import dev.mani.productservice.dtos.FakeStoreUpdateProductRequestDto;
 import dev.mani.productservice.models.Product;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.apache.coyote.Response;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,7 +22,7 @@ public class FakeStoreProductService implements ProductService{
 
 
     @Override
-    public List<Product> getAllProducts() {
+    public ResponseEntity<List<Product>> getAllProducts() {
         FakeStoreProductDto[] responseDtos = restTemplate.getForObject("https://fakestoreapi.com/products",
                 FakeStoreProductDto[].class);
 
@@ -32,18 +31,27 @@ public class FakeStoreProductService implements ProductService{
             products.add(productDto.toProduct());
         }
 
-        return products;
+        ResponseEntity<List<Product>> response = new ResponseEntity<>(products, HttpStatus.OK);
+        return response;
 
     }
 
     @Override
-    public Product getProductById(Long id) {
-        FakeStoreProductDto fakeStoreProductDto =  restTemplate.getForObject("https://fakestoreapi.com/products/"+id, FakeStoreProductDto.class);
-        return fakeStoreProductDto.toProduct();
+    public ResponseEntity<Product> getProductById(Long id) {
+        ResponseEntity<FakeStoreProductDto> responseEntity =  restTemplate.getForEntity("https://fakestoreapi.com/products/"+id, FakeStoreProductDto.class);
+        if(responseEntity.getStatusCode() != HttpStatusCode.valueOf(200)){
+            // throw some Exception
+        }
+
+        FakeStoreProductDto fakeStoreProductDto = responseEntity.getBody();
+        Product product = fakeStoreProductDto.toProduct();
+
+        ResponseEntity<Product> response = new ResponseEntity<>(product, HttpStatus.OK);
+        return response;
     }
 
     @Override
-    public Product createProduct(String title, String description, Double price, String image, String category) {
+    public ResponseEntity<Product> createProduct(String title, String description, Double price, String image, String category) {
         FakeStoreCreateProductDto requestDto = new FakeStoreCreateProductDto();
         requestDto.setTitle(title);
         requestDto.setDescription(description);
@@ -51,12 +59,19 @@ public class FakeStoreProductService implements ProductService{
         requestDto.setImage(image);
         requestDto.setCategory(category);
 
-        FakeStoreProductDto responseDto = restTemplate.postForObject("https://fakestoreapi.com/products", requestDto, FakeStoreProductDto.class);
+        ResponseEntity<FakeStoreProductDto> responseEntity = restTemplate.postForEntity("https://fakestoreapi.com/products", requestDto, FakeStoreProductDto.class);
+        if(responseEntity.getStatusCode() != HttpStatusCode.valueOf(200)){
+            // throw some Exception
+        }
 
-        return responseDto.toProduct();
+        FakeStoreProductDto fakeStoreProductDto = responseEntity.getBody();
+        Product product = fakeStoreProductDto.toProduct();
+
+        ResponseEntity<Product> response = new ResponseEntity<>(product, HttpStatus.CREATED);
+        return response;
     }
 
-    public Product updateProductById(Long id, String title, String description, Double price, String image, String category ) {
+    public ResponseEntity<Product> updateProductById(Long id, String title, String description, Double price, String image, String category ) {
         FakeStoreUpdateProductRequestDto requestDto = new FakeStoreUpdateProductRequestDto();
         requestDto.setId(id);
         requestDto.setTitle(title);
@@ -73,8 +88,11 @@ public class FakeStoreProductService implements ProductService{
                 requestEntity,
                 FakeStoreProductDto.class);
 
-        FakeStoreProductDto productDto = responseDto.getBody();
-        return productDto.toProduct();
+        FakeStoreProductDto fakeStoreProductDto = responseDto.getBody();
+        Product product = fakeStoreProductDto.toProduct();
+
+        ResponseEntity<Product> response = new ResponseEntity<>(product, HttpStatus.OK);
+        return response;
     }
 
 
