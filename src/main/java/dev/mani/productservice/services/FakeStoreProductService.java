@@ -3,8 +3,11 @@ package dev.mani.productservice.services;
 import dev.mani.productservice.dtos.FakeStoreCreateProductDto;
 import dev.mani.productservice.dtos.FakeStoreProductDto;
 import dev.mani.productservice.dtos.FakeStoreUpdateProductRequestDto;
+import dev.mani.productservice.exceptions.ExternalServiceException;
+import dev.mani.productservice.exceptions.NoProductsFoundException;
+import dev.mani.productservice.exceptions.ProductNotFoundException;
 import dev.mani.productservice.models.Product;
-import org.apache.coyote.Response;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,39 +18,52 @@ import java.util.List;
 @Service
 public class FakeStoreProductService implements ProductService{
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
+
     public FakeStoreProductService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
-
     @Override
     public ResponseEntity<List<Product>> getAllProducts() {
-        FakeStoreProductDto[] responseDtos = restTemplate.getForObject("https://fakestoreapi.com/products",
-                FakeStoreProductDto[].class);
+        ResponseEntity<List<FakeStoreProductDto>> responseEntity = restTemplate.exchange(
+                "https://fakestoreapi.com/products",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<FakeStoreProductDto>>() {}
+        );
+
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            throw new ExternalServiceException("Error while calling external service");
+        }
+
+        List<FakeStoreProductDto> responseDTOS = responseEntity.getBody();
+        if(responseDTOS == null) {
+            throw new NullPointerException();
+        }
+
+        if(responseDTOS.isEmpty()) {
+            throw new NoProductsFoundException();
+        }
 
         List<Product> products = new ArrayList<>();
-        for (FakeStoreProductDto productDto : responseDtos) {
+        for (FakeStoreProductDto productDto : responseDTOS) {
             products.add(productDto.toProduct());
         }
 
-        ResponseEntity<List<Product>> response = new ResponseEntity<>(products, HttpStatus.OK);
-        return response;
-
+        return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
     @Override
     public ResponseEntity<Product> getProductById(Long id) {
         ResponseEntity<FakeStoreProductDto> responseEntity =  restTemplate.getForEntity("https://fakestoreapi.com/products/"+id, FakeStoreProductDto.class);
-        if(responseEntity.getStatusCode() != HttpStatusCode.valueOf(200)){
-            // throw some Exception
-        }
 
         FakeStoreProductDto fakeStoreProductDto = responseEntity.getBody();
+        if(fakeStoreProductDto == null) {
+            throw new ProductNotFoundException("Product not found");
+        }
         Product product = fakeStoreProductDto.toProduct();
-
-        ResponseEntity<Product> response = new ResponseEntity<>(product, HttpStatus.OK);
-        return response;
+        return  new ResponseEntity<>(product, HttpStatus.OK);
     }
 
     @Override
@@ -60,15 +76,13 @@ public class FakeStoreProductService implements ProductService{
         requestDto.setCategory(category);
 
         ResponseEntity<FakeStoreProductDto> responseEntity = restTemplate.postForEntity("https://fakestoreapi.com/products", requestDto, FakeStoreProductDto.class);
-        if(responseEntity.getStatusCode() != HttpStatusCode.valueOf(200)){
-            // throw some Exception
-        }
-
         FakeStoreProductDto fakeStoreProductDto = responseEntity.getBody();
-        Product product = fakeStoreProductDto.toProduct();
 
-        ResponseEntity<Product> response = new ResponseEntity<>(product, HttpStatus.CREATED);
-        return response;
+        if(fakeStoreProductDto == null) {
+            throw new NullPointerException();
+        }
+        Product product = fakeStoreProductDto.toProduct();
+        return   new ResponseEntity<>(product, HttpStatus.CREATED);
     }
 
     public ResponseEntity<Product> updateProductById(Long id, String title, String description, Double price, String image, String category ) {
@@ -89,11 +103,11 @@ public class FakeStoreProductService implements ProductService{
                 FakeStoreProductDto.class);
 
         FakeStoreProductDto fakeStoreProductDto = responseDto.getBody();
+        if(fakeStoreProductDto == null) {
+            throw new NullPointerException();
+        }
         Product product = fakeStoreProductDto.toProduct();
-
-        ResponseEntity<Product> response = new ResponseEntity<>(product, HttpStatus.OK);
-        return response;
+        return   new ResponseEntity<>(product, HttpStatus.OK);
     }
-
 
 }
