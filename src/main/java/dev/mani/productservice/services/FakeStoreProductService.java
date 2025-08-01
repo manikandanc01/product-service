@@ -30,7 +30,8 @@ public class FakeStoreProductService implements ProductService{
                 "https://fakestoreapi.com/products",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<FakeStoreProductDto>>() {}
+                new ParameterizedTypeReference<>() {
+                }
         );
 
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
