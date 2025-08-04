@@ -34,8 +34,10 @@ public class FakeStoreProductService implements ProductService{
                 }
         );
 
-        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-            throw new ExternalServiceException("Error while calling external service");
+        if (responseEntity.getStatusCode() == HttpStatusCode.valueOf(404)) {
+            throw new ProductNotFoundException("Product not found");
+        }else if(responseEntity.getStatusCode() == HttpStatusCode.valueOf(500)) {
+            throw new ExternalServiceException("Internal Server Error");
         }
 
         List<FakeStoreProductDto> responseDTOS = responseEntity.getBody();
