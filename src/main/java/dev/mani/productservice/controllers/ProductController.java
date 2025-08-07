@@ -4,6 +4,7 @@ import dev.mani.productservice.dtos.CreateProductRequestDto;
 import dev.mani.productservice.dtos.UpdateProductRequestDto;
 import dev.mani.productservice.models.Product;
 import dev.mani.productservice.services.ProductService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,9 +13,9 @@ import java.util.List;
 @RestController
 public class ProductController {
 
-    private ProductService productService;
+    private final ProductService productService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(@Qualifier("databaseProductService") ProductService productService) {
         this.productService = productService;
     }
 
