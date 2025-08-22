@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Service("databaseProductService")
-//@Primary -> currently we have two beans for ProductService, by default it will select this service
 public class DatabaseProductService implements  ProductService{
     ProductRepository productRepository;
     CategoryRepository categoryRepository;

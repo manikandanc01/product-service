@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 public class BaseModel {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    // By default the Id generation startegy is auto
     private Long id;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
